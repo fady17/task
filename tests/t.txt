@@ -1,0 +1,88 @@
+# TEST 1.1: CREATE a new list named "Groceries"
+# Should return a 201 Created status and the new list object.
+echo "--- 1.1: Creating 'Groceries' list ---"
+curl -X POST -H "Content-Type: application/json" -d '{"title": "Groceries"}' http://127.0.0.1:8000/lists/
+# Expected: {"id": 1, "title": "Groceries", "items": []}
+
+# TEST 1.2: CREATE another list named "Work Tasks"
+# Should return a 201 Created status and the new list object with id=2.
+echo "\n\n--- 1.2: Creating 'Work Tasks' list ---"
+curl -X POST -H "Content-Type: application/json" -d '{"title": "Work Tasks"}' http://127.0.0.1:8000/lists/
+# Expected: {"id": 2, "title": "Work Tasks", "items": []}
+
+# TEST 1.3: GET all lists
+# Should return a 200 OK status and an array containing both lists.
+echo "\n\n--- 1.3: Getting all lists ---"
+curl -X GET http://127.0.0.1:8000/lists/
+# Expected: [{"id": 1, ...}, {"id": 2, ...}]
+
+# TEST 1.4: GET a single list by ID (id=1)
+# Should return a 200 OK status and the "Groceries" list.
+echo "\n\n--- 1.4: Getting list with id=1 ---"
+curl -X GET http://127.0.0.1:8000/lists/1
+# Expected: {"id": 1, "title": "Groceries", "items": []}
+
+# TEST 1.5: UPDATE a list by ID (id=1)
+# Change the title from "Groceries" to "Weekly Groceries". Should return 200 OK.
+echo "\n\n--- 1.5: Updating list with id=1 ---"
+curl -X PUT -H "Content-Type: application/json" -d '{"title": "Weekly Groceries"}' http://127.0.0.1:8000/lists/1
+# Expected: {"id": 1, "title": "Weekly Groceries", "items": []}
+
+# TEST 1.6: VERIFY the update by getting the list again.
+echo "\n\n--- 1.6: Verifying update for list 1 ---"
+curl -X GET http://127.0.0.1:8000/lists/1
+# Expected: {"id": 1, "title": "Weekly Groceries", "items": []}
+
+# TEST 1.7: DELETE a list by ID (id=2)
+# Should return a 204 No Content status. The -i flag shows headers.
+echo "\n\n--- 1.7: Deleting list with id=2 ---"
+curl -i -X DELETE http://127.0.0.1:8000/lists/2
+# Expected: HTTP/1.1 204 No Content
+
+# TEST 1.8: VERIFY the deletion by trying to get the deleted list.
+# Should return a 404 Not Found error.
+echo "\n\n--- 1.8: Verifying deletion of list 2 ---"
+curl -i -X GET http://127.0.0.1:8000/lists/2
+# Expected: HTTP/1.1 404 Not Found
+
+# TEST 1.9: GET all lists again to ensure only one remains.
+echo "\n\n--- 1.9: Getting all lists again ---"
+curl -X GET http://127.0.0.1:8000/lists/
+# Expected: [{"id": 1, "title": "Weekly Groceries", "items": []}]
+
+
+
+# TEST 2.1: CREATE a new item "Milk" in our "Weekly Groceries" list (id=1)
+# Should return a 201 Created status.
+echo "\n\n--- 2.1: Creating item 'Milk' in list 1 ---"
+curl -X POST -H "Content-Type: application/json" -d '{"title": "Milk"}' http://127.0.0.1:8000/lists/1/items/
+# Expected: {"id": 1, "title": "Milk", "completed": false}
+
+# TEST 2.2: CREATE another item "Eggs" in the same list.
+echo "\n\n--- 2.2: Creating item 'Eggs' in list 1 ---"
+curl -X POST -H "Content-Type: application/json" -d '{"title": "Eggs"}' http://127.0.0.1:8000/lists/1/items/
+# Expected: {"id": 2, "title": "Eggs", "completed": false}
+
+# TEST 2.3: VERIFY items were added by getting the parent list.
+# The "items" array should now contain two items.
+echo "\n\n--- 2.3: Verifying items in list 1 ---"
+curl -X GET http://127.0.0.1:8000/lists/1
+# Expected: {"id": 1, ..., "items": [{"id": 1, ...}, {"id": 2, ...}]}
+
+# TEST 2.4: UPDATE an item (item id=1 in list 1)
+# Mark "Milk" as completed and change its title.
+echo "\n\n--- 2.4: Updating item 1 in list 1 ---"
+curl -X PUT -H "Content-Type: application/json" -d '{"id": 1, "title": "Organic Milk", "completed": true}' http://127.0.0.1:8000/lists/1/items/1
+# Expected: {"id": 1, "title": "Organic Milk", "completed": true}
+
+# TEST 2.5: DELETE an item (item id=2 in list 1)
+# Should return a 204 No Content.
+echo "\n\n--- 2.5: Deleting item 2 in list 1 ---"
+curl -i -X DELETE http://127.0.0.1:8000/lists/1/items/2
+# Expected: HTTP/1.1 204 No Content
+
+# TEST 2.6: VERIFY deletion by getting the parent list again.
+# The "items" array should now contain only one item.
+echo "\n\n--- 2.6: Verifying deletion of item 2 ---"
+curl -X GET http://127.0.0.1:8000/lists/1
+# Expected: {"id": 1, ..., "items": [{"id": 1, "title": "Organic Milk", "completed": true}]}

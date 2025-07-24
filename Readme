@@ -1,0 +1,2 @@
+alembic revision --autogenerate -m "Create initial todo_lists and todo_items tables"
+alembic upgrade head
