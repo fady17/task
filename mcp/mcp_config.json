@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "todo-api": {
+      "command": "python",
+      "args": ["mcp_todo_server.py"],
+      "env": {
+        "TODO_API_BASE_URL": "http://localhost:8000"
+      }
+    }
+  }
+}
