@@ -5,6 +5,7 @@ Contains API URLs, model names, system prompts, tool definitions, and other stat
 """
 
 import logging
+import os
 from aiortc import RTCConfiguration, RTCIceServer
 
 # --- LOGGING SETUP ---
@@ -12,15 +13,26 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # --- API & MODEL CONFIGURATION ---
-LM_STUDIO_API_URL = "http://localhost:1234/v1"
+# LM_STUDIO_API_URL = "http://localhost:1234/v1"
+LM_STUDIO_HOST = os.getenv("LM_STUDIO_HOST", "localhost")
+LM_STUDIO_API_URL = f"http://{LM_STUDIO_HOST}:1234/v1"
+
 CRUD_API_URL = "http://localhost:8000"
 MODEL_NAME = "qwen2.5-7b-instruct"
+TURN_SERVER_HOST = os.getenv("DOCKER_HOST_IP", "127.0.0.1")
+
+
 
 # --- WEBRTC CONFIGURATION ---
 PC_CONFIG = RTCConfiguration(iceServers=[
-    RTCIceServer(urls=["turn:127.0.0.1:3478"], username="demo", credential="password"),
+    RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
     RTCIceServer(urls=["stun:stun.l.google.com:19302"])
 ])
+# PC_CONFIG = RTCConfiguration(iceServers=[
+#     # RTCIceServer(urls=["turn:127.0.0.1:3478"], username="demo", credential="password"),
+#     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
+#     RTCIceServer(urls=["stun:stun.l.google.com:19302"])
+# ])
 
 
 

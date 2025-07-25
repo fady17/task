@@ -7,11 +7,78 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"  # Map local port 5432 to the container's port 5432
+    # ports:
+    #   - "5432:5432" 
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Persist data even if the container is removed
+      - postgres_data:/var/lib/postgresql/data 
+      - ./ai/seed:/docker-entrypoint-initdb.d
+    networks:
+      - todo_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: todo_api
+    depends_on:
+      postgres_db:
+          condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres_db
+      DOCKER_HOST_IP: ${DOCKER_HOST_IP}
+ 
+      LM_STUDIO_HOST: host.docker.internal
+
+    env_file:
+      - .env
+    networks:
+      - todo_network 
+
+    restart: unless-stopped
+    
+  ui:
+    build:
+      context: ../todo-ui
+      dockerfile: Dockerfile
+    container_name: todo_ui
+    ports:
+      - "5173:80" # Map local port 5173 (Vite's default) to Nginx's port 80
+    depends_on:
+      - api
+    networks:
+      - todo_network
+       
+    restart: unless-stopped
+    
+
+  # The CoTURN Server
+  turn:
+    image: coturn/coturn
+    container_name: todo_turn
+    volumes:
+      # Mount your config file into the container
+      - ./turnserver.conf:/etc/coturn/turnserver.conf
+    # The command tells coturn to use your config file
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+    networks:
+      - todo_network 
+    ports:
+      
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+    restart: unless-stopped
+networks:
+  todo_network:
+    driver: bridge
 
 volumes:
   postgres_data:
