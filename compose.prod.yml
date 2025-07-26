@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  postgres_db:
+    image: postgres:latest
+    container_name: todo_postgres_prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      # We still need the seed script for a fresh database
+      - ./ai/seed:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+  api:
+    # --- PULL FROM DOCKER HUB ---
+    # Instead of 'build:', we use 'image:'.
+    # Replace 'fady176' with your actual Docker Hub username.
+    image: fady176/todo-api:1.0.0
+    container_name: todo_api_prod
+    depends_on:
+      - postgres_db
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_HOST: postgres_db
+      DOCKER_HOST_IP: ${DOCKER_HOST_IP}
+      LM_STUDIO_HOST: host.docker.internal
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  ui:
+    # --- PULL FROM DOCKER HUB ---
+    # Replace 'fady176' with your actual Docker Hub username.
+    image: fady176/todo-ui:1.0.0
+    container_name: todo_ui_prod
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  turn:
+    image: coturn/coturn
+    container_name: todo_turn_prod
+    # We still need to provide the configuration file
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+    # networks:
+    #   - todo_network 
+    ports:
+      
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+    restart: unless-stopped
+
+volumes:
+  # Use a separate volume for production data to avoid conflicts
+  postgres_prod_data:

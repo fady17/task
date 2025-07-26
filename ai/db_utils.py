@@ -21,7 +21,7 @@ async def get_pool():
             user=os.getenv("POSTGRES_USER", "appuser"),
             password=os.getenv("POSTGRES_PASSWORD", "a-strong-password"),
             database=os.getenv("POSTGRES_DB", "todo_db"),
-            host=db_host # Use the variable here
+            host=os.getenv("DB_HOST", "localhost"),
         )
     return DB_POOL
 

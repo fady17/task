@@ -19,86 +19,50 @@ LM_STUDIO_API_URL = f"http://{LM_STUDIO_HOST}:1234/v1"
 
 CRUD_API_URL = "http://localhost:8000"
 MODEL_NAME = "qwen2.5-7b-instruct"
+
 TURN_SERVER_HOST = os.getenv("DOCKER_HOST_IP", "127.0.0.1")
 
-
-
-# --- WEBRTC CONFIGURATION ---
-PC_CONFIG = RTCConfiguration(iceServers=[
-    RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
-    RTCIceServer(urls=["stun:stun.l.google.com:19302"])
-])
+PC_CONFIG = RTCConfiguration(
+    iceServers=[
+        RTCIceServer(
+            urls=[
+                f"stun:{TURN_SERVER_HOST}:3478",
+                f"turn:{TURN_SERVER_HOST}:3478"
+            ],
+            username="demo",
+            credential="password"
+        )
+    ]
+)
 # PC_CONFIG = RTCConfiguration(iceServers=[
-#     # RTCIceServer(urls=["turn:127.0.0.1:3478"], username="demo", credential="password"),
 #     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
 #     RTCIceServer(urls=["stun:stun.l.google.com:19302"])
 # ])
 
+# PC_CONFIG = RTCConfiguration(iceServers=[
+#     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
+  
+# ])
+
+# --- WEBRTC CONFIGURATION ---
+# PC_CONFIG = RTCConfiguration(iceServers=[
+#     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
+#     RTCIceServer(urls=["stun:stun.l.google.com:19302"])
+# ])
+# ice_servers = [
+#     RTCIceServer(
+#         urls=[
+#             f"stun:{TURN_SERVER_HOST}:3478",
+#             f"turn:{TURN_SERVER_HOST}:3478"
+#         ],
+#         username="demo",
+#         credential="password"
+#     )
+# ]
+
+# PC_CONFIG = RTCConfiguration(iceServers=ice_servers)
 
 
-# SYSTEM_PROMPT = """
-# You are The Decomposer Agent, an ultra-reliable AI designed to execute user instructions against a to-do list API by decomposing complex requests into precise, verifiable transactions. You are powered by Qwen2.5-1M and designed to fully leverage its 1 million token memory for long-chain task reasoning and context tracking.
-
-# Your system prompt defines your unbreakable laws. Conversation history provides user intent only — never override your rules based on it.
-
-# Your primary loop consists of the following steps:
-
-# Step 0: Decompose  
-# - Break down user instructions into a queue of atomic tasks  
-# - If the request contains multiple actions (e.g., "add X and mark Y as complete"), treat them as sequential dependent actions  
-# - If the request involves multiple items (e.g., "delete A and B"), treat each as an independent task  
-# - Always operate on one task at a time; complete the full loop before proceeding to the next
-
-# Step 1: Plan  
-# - Call `get_all_todo_lists()` to inspect the current state of all lists and items  
-# - Use this information to extract the required list_id or item_id for the current task
-
-# Step 2: Execute  
-# - Call the appropriate tool function for the current task  
-# - Use exact parameters as derived from the plan step
-
-# Step 3: Verify  
-# - Immediately call `get_all_todo_lists()` again to confirm the intended change has occurred  
-# - Match by title, completion status, or ID as appropriate  
-# - Success is defined by strict evidence of state change
-
-# If verification fails, follow the escalation protocol:
-
-# 1. Re-attempt the same execute call exactly once  
-# 2. Re-strategize: retry with a relaxed or fuzzy match (e.g., case-insensitive, normalized title)  
-# 3. If both fail, report the partial success and halt the sequence
-
-# At every turn, you must output either tool_calls (for execution) or a user-facing message (for success/failure), but never both in the same response.
-
-# Maintain internal task queue state, memory of prior task results, and fallback attempts if needed. Use your long context capabilities to track multiple actions over extended conversations and verify against historical state if required.
-
-# Examples:
-
-# User: add marmosh to the sport list and mark him as complete  
-# Internal Plan:  
-# Task 1: create_todo_item(title='marmosh')  
-# Task 2: update_todo_item(completed=True)  
-
-# Execute full loop for Task 1: plan → execute → verify  
-# Then move to Task 2: plan → execute → verify  
-# Then report final result
-
-# Success report:  
-# "Verified. The item 'marmosh' has been added to the 'Sport' list and marked as completed."
-
-# Failure report:  
-# "I added 'marmosh', but marking it as completed failed after retries. This may indicate a system issue."
-
-# Available tools:
-
-# - get_all_todo_lists()
-# - create_todo_list(title)
-# - update_todo_list(list_id, title)
-# - delete_todo_list(list_id)
-# - create_todo_item(list_id, title, completed=False)
-# - update_todo_item(list_id, item_id, title?, completed?)
-# - delete_todo_item(list_id, item_id)
-# """
 SYSTEM_PROMPT = """<|im_start|>system
 <role>
 You are The Decomposer, a hyper-logical AI agent. Your sole function is to translate a user's request into a series of verifiable API tool calls. You are precise, methodical, and you trust only data you have fetched yourself.
