@@ -17,11 +17,17 @@ logger = logging.getLogger(__name__)
 LM_STUDIO_HOST = os.getenv("LM_STUDIO_HOST", "localhost")
 LM_STUDIO_API_URL = f"http://{LM_STUDIO_HOST}:1234/v1"
 
-CRUD_API_URL = "http://localhost:8000"
+# CRUD_API_URL = "http://localhost:8000"
+CRUD_API_HOST = os.getenv("API_HOST", "localhost")
+CRUD_API_URL = f"http://{CRUD_API_HOST}:8000"
+
 MODEL_NAME = "qwen2.5-7b-instruct"
 
 TURN_SERVER_HOST = os.getenv("DOCKER_HOST_IP", "127.0.0.1")
-
+# PC_CONFIG = RTCConfiguration(iceServers=[
+#     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
+#     RTCIceServer(urls=["stun:stun.l.google.com:19302"])
+# ])
 PC_CONFIG = RTCConfiguration(
     iceServers=[
         RTCIceServer(
@@ -34,10 +40,7 @@ PC_CONFIG = RTCConfiguration(
         )
     ]
 )
-# PC_CONFIG = RTCConfiguration(iceServers=[
-#     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
-#     RTCIceServer(urls=["stun:stun.l.google.com:19302"])
-# ])
+
 
 # PC_CONFIG = RTCConfiguration(iceServers=[
 #     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),

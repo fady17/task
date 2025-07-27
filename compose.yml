@@ -1,6 +1,7 @@
 
 
 services:
+
   postgres_db:
     image: postgres:latest
     container_name: todo_postgres
@@ -27,26 +28,26 @@ services:
     container_name: todo_api
     depends_on:
       postgres_db:
-          condition: service_healthy
-      # turn:
-      #   condition: service_started
+        condition: service_healthy
+      turn:
+        condition: service_healthy
     ports:
       - "8000:8000"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST: postgres_db
+      API_HOST: api 
 
+      POSTGRES_HOST: postgres_db
       # TURN_SERVER_HOST: 172.28.1.1
       DOCKER_HOST_IP: ${DOCKER_HOST_IP}
- 
       LM_STUDIO_HOST: host.docker.internal
 
     env_file:
-      - .env
+        - .env
     networks:
-      - todo_network 
+        - todo_network 
 
     restart: unless-stopped
     
@@ -78,12 +79,19 @@ services:
         - "3478:3478/tcp"
         - "3478:3478/udp"
       restart: unless-stopped
+      healthcheck:
+   
+        test: ["CMD-SHELL", "cat /proc/net/tcp | awk '$$2 ~ /:0D96$$/' | grep -q ."]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+        start_period: 10s 
     
 
 networks:
   todo_network:
     driver: bridge
-    
+
 volumes:
   postgres_data:
  

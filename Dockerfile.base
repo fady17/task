@@ -1,0 +1,18 @@
+# Start from the Python image
+FROM python:3.10-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Copy the requirements file from the primary build context (.)
+COPY ./requirements.txt /tmp/api_requirements.txt
+
+# --- THE FIX IS HERE ---
+# Copy the requirements file from the 'voiceservice' additional context.
+# The path is now relative to the named context.
+COPY --from=voiceservice /requirements.txt /tmp/voice_requirements.txt
+
+# Install all dependencies from both files into one environment
+RUN pip install --no-cache-dir -r /tmp/api_requirements.txt && \
+    pip install --no-cache-dir -r /tmp/voice_requirements.txt
