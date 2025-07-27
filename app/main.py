@@ -46,9 +46,10 @@ app.add_middleware(
 
 # --- Include Routers ---
 # Include the CRUD routers at the root level
+app.include_router(config.router)
 app.include_router(todos.router)
 app.include_router(items.router)
-app.include_router(config.router)
+# app.include_router(ai_api_router, prefix="/ai")
 
 # Mount the entire AI application under the /ai prefix
 app.include_router(
