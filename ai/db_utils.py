@@ -16,13 +16,14 @@ async def get_pool():
     """
     global DB_POOL
     if DB_POOL is None:
-        db_host = os.getenv("POSTGRES_HOST", "localhost")
+        # db_host = os.getenv("POSTGRES_HOST", "localhost")s
         DB_POOL = await asyncpg.create_pool(
             user=os.getenv("POSTGRES_USER", "appuser"),
             password=os.getenv("POSTGRES_PASSWORD", "a-strong-password"),
             database=os.getenv("POSTGRES_DB", "todo_db"),
             # host=os.getenv("DB_HOST", "localhost"),
-            host=db_host,
+            # host=db_host,
+            host=os.getenv("POSTGRES_HOST"), 
         )
     return DB_POOL
 

@@ -86,6 +86,37 @@ services:
         timeout: 5s
         retries: 5
         start_period: 10s 
+  
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: todo_redis
+  #   networks:
+  #     - todo_network
+  #   restart: unless-stopped
+
+  # --- NEW: Add the LiveKit Media Server ---
+  # livekit:
+  #   image: livekit/livekit-server:v1.9 # Use a specific, stable version
+  #   container_name: todo_livekit
+  #   command: --config /etc/livekit.yaml
+  #   volumes:
+  #     # We will create this config file in the next step
+  #     - ./livekit.yaml:/etc/livekit.yaml
+  #   networks:
+  #     - todo_network
+  #   ports:
+  #     # Standard WebRTC port
+  #     - "7880:7880/tcp"
+  #     # TURN over UDP for media
+  #     - "7881:7881/udp"
+  #     # TURN over TCP (fallback)
+  #     - "7882:7882/tcp"
+  #   environment:
+  #     # Tell LiveKit how to find Redis
+  #     - REDIS_URL=redis://todo_redis:6379
+  #   depends_on:
+  #     - redis
+  #   restart: unless-stopped
     
 
 networks:

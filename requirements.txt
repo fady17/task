@@ -24,7 +24,8 @@ pydantic-settings
 # The core library for handling WebRTC connections.
 # This library has many dependencies (cryptography, av, etc.) which pip will install.
 aiortc
-
+livekit
+livekit-api   
 # AV is a direct and critical dependency of aiortc for handling media frames.
 # It's good practice to list it explicitly.
 av

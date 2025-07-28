@@ -11,15 +11,19 @@ from . import db_utils
 from .config import logger
 from .routers import sessions, websocket
 from .dependencies import get_todo_api_client
-
+from fastapi.middleware.cors import CORSMiddleware
 # This is the main router for the entire 'ai' application.
 # The parent FastAPI app will mount this router.
-api_router = APIRouter()
+api_router = APIRouter(prefix="/ai")
+
 
 # Include all the sub-routers
 api_router.include_router(sessions.router)
 api_router.include_router(websocket.router)
 
+@api_router.get("/health-check")
+async def ai_health_check():
+    return {"status": "AI module is alive!"}
 # --- Application Lifecycle Events ---
 
 async def startup_event():
@@ -49,6 +53,7 @@ async def shutdown_event():
     if pool:
         await pool.close()
         logger.info("Database pool closed.")
+
 
 @api_router.get("/")
 async def root():
