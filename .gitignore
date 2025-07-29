@@ -1,3 +1,5 @@
 .env
-todo_env
-__pycache__
+todo_env/
+__pycache__/
+.DS_Store
+tests/

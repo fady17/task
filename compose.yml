@@ -1,18 +1,44 @@
 
 services:
-  postgres_db:
+  db:
     image: postgres:latest
-    container_name: todo_postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"  # Map local port 5432 to the container's port 5432
+    container_name: todo_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Persist data even if the container is removed
-    restart: unless-stopped
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-myuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      POSTGRES_DB: ${POSTGRES_DB:-tododb}
+    ports:
+      - "5432:5432"
+    # --- NEW: Healthcheck to ensure the database is ready ---
+    healthcheck:
+      # pg_isready is a utility to check the connection status of a PostgreSQL server
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-myuser} -d ${POSTGRES_DB:-tododb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # The FastAPI Application Service
+  api:
+    container_name: todo_api
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-myuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      POSTGRES_DB: ${POSTGRES_DB:-tododb}
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    # --- UPDATED: Wait for the db service to be 'healthy' ---
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
-  
