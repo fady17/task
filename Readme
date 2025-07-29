@@ -1,56 +1,8 @@
 #  DONT USE THE DOCKERS
 
 
-# AI Agent with WebRTC and MCP Integration
+# AI Agent with MCP Integration
 
-## Abstract
-
-This project serves as a demonstration of a real-time AI agent capable of performing and verifying stateful operations. The architecture is designed for low-latency human-to-agent interaction via a WebRTC data channel, with a backend powered by a LMStudio. The system also includes an MCP (Model Context Protocol) server to expose the application's toolset for the AI.
-
-
-### 1. WebRTC for Real-Time Interaction
-
-To achieve near-instantaneous communication between the client and the AI agent, this project eschews traditional request-response cycles in favor of a persistent WebRTC data channel.
-
-**The Connection Lifecycle:**
-
-1.  **Signaling:** The client initiates a WebSocket connection to the FastAPI backend (`/ai/ws`). This connection serves as the signaling channel. The client sends an SDP (Session Description Protocol) "offer" to the backend.
-2.  **ICE Negotiation:** Both the client and the backend `aiortc` instance begin the ICE (Interactive Connectivity Establishment) process. They gather network candidates to find the most efficient path for communication.
-3.  **Candidate Exchange:** Candidates are exchanged over the WebSocket signaling channel. The process prioritizes connection types in the following order:
-    *   **Host:** Direct connection on the local network.
-    *   **Server Reflexive (srflx):** Connection via a STUN server, where a public IP and port are discovered through a NAT.
-    *   **Relay:** Connection relayed through a TURN server, used as a fallback when direct P2P is not possible.
-4.  **Data Channel Establishment:** Once a viable candidate pair is found and connectivity checks succeed, the encrypted SCTP (Stream Control Transmission Protocol) data channel is established. All subsequent chat messages and AI responses are sent over this low-latency channel.
-
-This architecture ensures that after the initial handshake, communication is highly efficient and suitable for real-time, conversational interaction.
-
-### 2. UDP-Based TURN Server 
-
-To overcome the challenges of Network Address Translation (NAT) and restrictive firewalls, a CoTURN server is integrated into the stack.
-
-*   **Role:** The TURN (Traversal Using Relays around NAT) server acts as a relay for WebRTC traffic when a direct peer-to-peer connection cannot be established.
-*   **Protocol:** It primarily utilizes UDP for media and data traffic, which is ideal for real-time applications due to its low overhead compared to TCP. TCP is available as a fallback.
-*   **Integration:** The TURN server is containerized and runs as part of the Docker Compose stack. The FastAPI backend is configured to provide the TURN server's credentials to the client during the initial ICE negotiation. This ensures that even clients on complex corporate or cellular networks can establish a reliable data channel. The use of `host.docker.internal` and a custom bridge network ensures seamless communication between the application container and the host-accessible TURN server.
-
-### 3. MCP Server for Standardized Tooling
-
-In addition to the primary FastAPI application, this project includes a standalone MCP (Model Context Protocol) server.
-
-*   **Purpose:** The MCP server exposes the application's core functionalities (e.g., `create_todo_item`, `delete_todo_list`) as a standardized set of "tools" that can be discovered and called by any MCP-compatible language model, such as those running in LM Studio.
-*   **Mechanism:** It operates over `stdio`, listening for JSON-RPC requests from the model environment. It provides a `list_tools` method to announce its capabilities and a `call_tool` method to execute functions.
-*   **Decoupling:** This provides a powerful layer of abstraction. The AI model does not need to know about REST APIs or HTTP methods; it only needs to know how to speak MCP. This makes the backend's "business logic" portable and usable by different AI environments without modification.
-
-## The AI Agent: A Transactional Approach
-
-The AI's operational logic is governed by a strict, state-aware protocol defined in its system prompt. It functions not as a conversationalist, but as a transactional agent.
-
-**The "Verify-Execute-Verify" Protocol:**
-
-1.  **Pre-computation Verification (PLAN):** Before any action, the agent calls `get_all_todo_lists()` to fetch the current state. This serves as a "pre-flight check" to ensure the target of the operation exists and to acquire its exact ID.
-2.  **Execution:** The agent calls the appropriate tool with the verified ID.
-3.  **Post-computation Verification (CONFIRM):** Immediately after execution, the agent calls `get_all_todo_lists()` a second time. It then performs a diff between the pre- and post-action states. A successful operation is only confirmed if the expected change is observed in the final state.
-
-This protocol, combined with a "Strategic Amnesia" context management strategy (where only the current user request and a fresh database state are sent to the model), makes the agent highly reliable and resilient to the "hallucination" of state that can affect large-context models.
 
 ## How to Run the Stack
 
@@ -105,15 +57,15 @@ This project is fully containerized with Docker, making it easy to run.
 *   **Backend:** Python / FastAPI
 *   **Frontend:** React / TypeScript / Vite
 *   **Database:** PostgreSQL
-*   **Real-Time Communication:** WebRTC with a CoTURN server
+*   **Real-Time Communication:** WebRTC with a CoTURN server (live kit now)
 *   **AI Model Hosting:** LM Studio
 *   **Containerization:** Docker / Docker Compose
 
-# Commands
+# Commands i use
 alembic revision --autogenerate -m "Create initial todo_lists and todo_items tables"
 alembic upgrade head
 
-turnserver -c turnserver.conf
+turnserver -c turnserver.conf 
 
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
