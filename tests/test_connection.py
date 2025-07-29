@@ -21,15 +21,10 @@ async def check_connection():
             # print(f"Query result: {result.scalar()}")
             
     except Exception as e:
-        print("--------------------------------------------------")
+       
         print("🔥 Failed to connect to the database.")
         print(f"Error: {e}")
-        print("--------------------------------------------------")
-        print("Troubleshooting Steps:")
-        print("1. Is Docker running?")
-        print("2. Did you run 'docker-compose up -d'?")
-        print("3. Are the credentials in your .env file correct?")
-        print("4. Is another process using port 5432?")
+        
 
 # Use asyncio.run() to execute our async function.
 if __name__ == "__main__":
