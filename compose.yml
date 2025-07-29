@@ -11,9 +11,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-tododb}
     ports:
       - "5432:5432"
-    # --- NEW: Healthcheck to ensure the database is ready ---
+   
     healthcheck:
-      # pg_isready is a utility to check the connection status of a PostgreSQL server
+     
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-myuser} -d ${POSTGRES_DB:-tododb}"]
       interval: 5s
       timeout: 5s
@@ -35,7 +35,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-tododb}
       POSTGRES_HOST: ${POSTGRES_HOST:-db}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-    # --- UPDATED: Wait for the db service to be 'healthy' ---
+   
     depends_on:
       db:
         condition: service_healthy
