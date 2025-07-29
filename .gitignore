@@ -1,6 +1,10 @@
 .env
 todo_env
 __pycache__
+.env
+
+.DS_Store
+tests/
 
 
 localhost+3-key.pem
