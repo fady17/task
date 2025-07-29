@@ -11,11 +11,11 @@ from ..services.ai_processor import process_chat_request
 from ..services.todo_client import TodoAPIClient
 from ..dependencies import get_todo_api_client # <<<--- FIX: Import necessary dependencies
 
-router = APIRouter(
-    prefix="/ws", # The prefix is just "/ws"
-    tags=["AI WebSocket"]
-)
-
+# router = APIRouter(
+#     prefix="/ws", # The prefix is just "/ws"
+#     tags=["AI WebSocket"]
+# )
+router = APIRouter(tags=["WebRTC Chat"])
 pcs: Set[RTCPeerConnection] = set()
 
 # <<<--- FIX 1: Bring back the lifecycle management function ---<<<
@@ -34,7 +34,7 @@ def safe_send(channel, message: str):
     except Exception as e:
         logger.error(f"Failed to send message: {e}")
 
-@router.websocket("")
+@router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
     # <<<--- FIX 2: Use Depends for clean dependency injection ---<<<

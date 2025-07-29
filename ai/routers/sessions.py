@@ -7,11 +7,15 @@ Provides endpoints to create, retrieve, and delete sessions and their messages.
 from fastapi import APIRouter, HTTPException
 from .. import db_utils
 
+router = APIRouter(
+    prefix="/sessions",
+    tags=["Sessions"],
+)
 # router = APIRouter(
 #     prefix="/ai/sessions",
 #     tags=["Sessions"],
 # )
-router = APIRouter(prefix="/sessions", tags=["AI Sessions"])
+# router = APIRouter(prefix="/sessions", tags=["AI Sessions"])
 
 @router.get("/user/{user_id}")
 async def get_user_sessions(user_id: int):

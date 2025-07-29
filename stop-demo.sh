@@ -1,7 +1,6 @@
 #!/bin/bash
-GREEN='\033[0;32m'
-NC='\033[0m'
-echo -e "${GREEN}--- Tearing Down Demo Environment ---${NC}"
-docker-compose -f compose.yml -f compose.dev.yml down -v
+echo "--- Shutting Down Demo Environment ---"
 sudo brew services stop nginx
-echo -e "\n${GREEN}--- ✅ Shutdown Complete ---${NC}"
+docker compose down -v --remove-orphans
+lsof -t -i:5173 | xargs kill -9 > /dev/null 2>&1
+echo "Cleanup complete."

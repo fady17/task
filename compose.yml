@@ -1,7 +1,4 @@
-
-
 services:
-
   postgres_db:
     image: postgres:latest
     container_name: todo_postgres
@@ -9,10 +6,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    # ports:
-    #   - "5432:5432" 
     volumes:
-      - postgres_data:/var/lib/postgresql/data 
+      - postgres_data:/var/lib/postgresql/data
       - ./ai/seed:/docker-entrypoint-initdb.d
     networks:
       - todo_network
@@ -22,33 +17,35 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    
+  # --- THE TURN SERVER IS RESTORED AND REQUIRED ---
+  turn:
+    image: coturn/coturn
+    container_name: todo_turn
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+    networks:
+      - todo_network 
+    ports:
+      # Expose TURN ports to the host for external devices
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+    restart: unless-stopped
+  # --- END OF TURN SERVER DEFINITION ---
 
   api:
     build: .
     container_name: todo_api
-    depends_on:
-      postgres_db:
-        condition: service_healthy
-      turn:
-        condition: service_healthy
-    ports:
-      - "8000:8000"
+    depends_on: { postgres_db: { condition: service_healthy } }
+    # NO PORTS. Only the ui container's proxy can access it.
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      API_HOST: api 
-
       POSTGRES_HOST: postgres_db
-      # TURN_SERVER_HOST: 172.28.1.1
-      DOCKER_HOST_IP: ${DOCKER_HOST_IP}
-      LM_STUDIO_HOST: host.docker.internal
-
-    env_file:
-        - .env
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+    env_file: .env
     networks:
-        - todo_network 
-
+      - todo_network 
     restart: unless-stopped
     
   ui:
@@ -57,67 +54,12 @@ services:
       dockerfile: Dockerfile
     container_name: todo_ui
     ports:
-      - "5173:80" # Map local port 5173 (Vite's default) to Nginx's port 80
+      - "5173:80" # The single public entry point for HTTP traffic.
     depends_on:
       - api
     networks:
       - todo_network
-       
     restart: unless-stopped
-    
-
-  # The CoTURN Server
-  turn:
-      image: coturn/coturn
-      container_name: todo_turn
-      volumes:
-        - ./turnserver.conf:/etc/coturn/turnserver.conf
-      command: ["-c", "/etc/coturn/turnserver.conf"]
-      networks:
-        - todo_network 
-      ports:
-        - "3478:3478/tcp"
-        - "3478:3478/udp"
-      restart: unless-stopped
-      healthcheck:
-   
-        test: ["CMD-SHELL", "cat /proc/net/tcp | awk '$$2 ~ /:0D96$$/' | grep -q ."]
-        interval: 10s
-        timeout: 5s
-        retries: 5
-        start_period: 10s 
-  
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: todo_redis
-  #   networks:
-  #     - todo_network
-  #   restart: unless-stopped
-
-  # --- NEW: Add the LiveKit Media Server ---
-  # livekit:
-  #   image: livekit/livekit-server:v1.9 # Use a specific, stable version
-  #   container_name: todo_livekit
-  #   command: --config /etc/livekit.yaml
-  #   volumes:
-  #     # We will create this config file in the next step
-  #     - ./livekit.yaml:/etc/livekit.yaml
-  #   networks:
-  #     - todo_network
-  #   ports:
-  #     # Standard WebRTC port
-  #     - "7880:7880/tcp"
-  #     # TURN over UDP for media
-  #     - "7881:7881/udp"
-  #     # TURN over TCP (fallback)
-  #     - "7882:7882/tcp"
-  #   environment:
-  #     # Tell LiveKit how to find Redis
-  #     - REDIS_URL=redis://todo_redis:6379
-  #   depends_on:
-  #     - redis
-  #   restart: unless-stopped
-    
 
 networks:
   todo_network:
@@ -125,4 +67,132 @@ networks:
 
 volumes:
   postgres_data:
+
+# services:
+
+#   postgres_db:
+#     image: postgres:latest
+#     container_name: todo_postgres
+#     environment:
+#       POSTGRES_USER: ${POSTGRES_USER}
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#       POSTGRES_DB: ${POSTGRES_DB}
+#     # ports:
+#     #   - "5432:5432" 
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data 
+#       - ./ai/seed:/docker-entrypoint-initdb.d
+#     networks:
+#       - todo_network
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+
+#   api:
+#     build: .
+#     container_name: todo_api
+#     depends_on:
+#       postgres_db:
+#         condition: service_healthy
+#       turn:
+#         condition: service_healthy
+#     ports:
+#       - "8000:8000"
+#     environment:
+#       POSTGRES_USER: ${POSTGRES_USER}
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#       POSTGRES_DB: ${POSTGRES_DB}
+#       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+#       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+#       # API_HOST: api 
+#       POSTGRES_HOST: postgres_db
+#       # TURN_SERVER_HOST: 172.28.1.1
+#       DOCKER_HOST_IP: ${DOCKER_HOST_IP}
+#       LM_STUDIO_HOST: host.docker.internal
+
+#     env_file:
+#         - .env
+#     networks:
+#         - todo_network 
+  
+#     restart: unless-stopped
+    
+#   ui:
+#     build:
+#       context: ../todo-ui
+#       dockerfile: Dockerfile
+#     container_name: todo_ui
+#     ports:
+#       - "5173:80" # Map local port 5173 (Vite's default) to Nginx's port 80
+#     depends_on:
+#       - api
+#     networks:
+#       - todo_network
+       
+#     restart: unless-stopped
+    
+
+#   # The CoTURN Server
+#   turn:
+#       image: coturn/coturn
+#       container_name: todo_turn
+#       volumes:
+#         - ./turnserver.conf:/etc/coturn/turnserver.conf
+#       command: ["-c", "/etc/coturn/turnserver.conf"]
+#       # network_mode: host
+#       networks:
+#         - todo_network 
+#       ports:
+#         - "3478:3478/tcp"
+#         - "3478:3478/udp"
+#       restart: unless-stopped
+#       healthcheck:
+   
+#         test: ["CMD-SHELL", "cat /proc/net/tcp | awk '$$2 ~ /:0D96$$/' | grep -q ."]
+#         interval: 10s
+#         timeout: 5s
+#         retries: 5
+#         start_period: 10s 
+  
+#   # redis:
+#   #   image: redis:7-alpine
+#   #   container_name: todo_redis
+#   #   networks:
+#   #     - todo_network
+#   #   restart: unless-stopped
+
+#   # --- NEW: Add the LiveKit Media Server ---
+#   # livekit:
+#   #   image: livekit/livekit-server:v1.9 # Use a specific, stable version
+#   #   container_name: todo_livekit
+#   #   command: --config /etc/livekit.yaml
+#   #   volumes:
+#   #     # We will create this config file in the next step
+#   #     - ./livekit.yaml:/etc/livekit.yaml
+#   #   networks:
+#   #     - todo_network
+#   #   ports:
+#   #     # Standard WebRTC port
+#   #     - "7880:7880/tcp"
+#   #     # TURN over UDP for media
+#   #     - "7881:7881/udp"
+#   #     # TURN over TCP (fallback)
+#   #     - "7882:7882/tcp"
+#   #   environment:
+#   #     # Tell LiveKit how to find Redis
+#   #     - REDIS_URL=redis://todo_redis:6379
+#   #   depends_on:
+#   #     - redis
+#   #   restart: unless-stopped
+    
+
+# networks:
+#   todo_network:
+#     driver: bridge
+
+# volumes:
+#   postgres_data:
  
