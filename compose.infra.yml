@@ -16,15 +16,15 @@ services:
       - "5432:5432"
     restart: unless-stopped
 
-  turn:
-    image: coturn/coturn
-    container_name: todo_turn_dev
-    volumes:
-      - ./turnserver.conf:/etc/coturn/turnserver.conf
-    command: ["-c", "/etc/coturn/turnserver.conf"]
-    # Host networking is simplest for local dev
-    network_mode: host
-    restart: unless-stopped
+  # turn:
+  #   image: coturn/coturn
+  #   container_name: todo_turn_dev
+  #   volumes:
+  #     - ./turnserver.conf:/etc/coturn/turnserver.conf
+  #   command: ["-c", "/etc/coturn/turnserver.conf"]
+  #   # Host networking is simplest for local dev
+  #   network_mode: host
+  #   restart: unless-stopped
 
 volumes:
   postgres_dev_data:

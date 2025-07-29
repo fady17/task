@@ -1,12 +1,12 @@
+#  DONT USE THE DOCKERS
+
+
 # AI Agent with WebRTC and MCP Integration
 
 ## Abstract
 
-This project serves as a demonstration of a robust, real-time AI agent capable of performing and verifying stateful operations. The architecture is designed for low-latency human-to-agent interaction via a WebRTC data channel, with a backend powered by a Qwen2.5 language model. The system also includes an MCP (Model Context Protocol) server to expose the application's toolset in a standardized format for compatible AI environments.
+This project serves as a demonstration of a real-time AI agent capable of performing and verifying stateful operations. The architecture is designed for low-latency human-to-agent interaction via a WebRTC data channel, with a backend powered by a LMStudio. The system also includes an MCP (Model Context Protocol) server to expose the application's toolset for the AI.
 
-## Core Technical Capabilities
-
-The primary focus of this project is the integration of three distinct server technologies to create a cohesive and responsive AI system: a WebRTC signaling and data backend, a UDP-based TURN server for network traversal, and an MCP server for standardized tool exposure.
 
 ### 1. WebRTC for Real-Time Interaction
 
@@ -24,7 +24,7 @@ To achieve near-instantaneous communication between the client and the AI agent,
 
 This architecture ensures that after the initial handshake, communication is highly efficient and suitable for real-time, conversational interaction.
 
-### 2. UDP-Based TURN Server for Robust Connectivity
+### 2. UDP-Based TURN Server 
 
 To overcome the challenges of Network Address Translation (NAT) and restrictive firewalls, a CoTURN server is integrated into the stack.
 
@@ -83,9 +83,19 @@ This project is fully containerized with Docker, making it easy to run.
     *   Navigate to the `todo-list` directory in your terminal.
     *   Run the single command:
       ```bash
-      docker-compose up --build
+      livekit-server --dev
+      # From the todo-list directory
+    docker compose -f compose.infra.yml up --build
+        #in a new terminal
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+        #in a new terminal
+    cd frontend
+    npm i
+    npm run dev
+
+
       ```
-    *   This will build the images and start all the services (frontend, backend, database, and TURN server).
+    *   This will build the images and start all the services (database, and TURN server).
 
 3.  **Access the Application:**
     *   Open your web browser and go to: `http://localhost:5173`

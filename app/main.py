@@ -1,3 +1,5 @@
+# app/main.py - RESTORED to the last good working state and AUGMENTED for LiveKit
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -14,10 +16,10 @@ app = FastAPI(title="Todo & AI API")
 @app.on_event("startup")
 async def startup(): await startup_event()
 @app.on_event("shutdown")
-async def shutdown(): await shutdown_event()
+async def shutdown():
+     await shutdown_event()
 
-# --- THIS IS THE KEY FIX FOR LOCAL DEVELOPMENT ---
-# It tells the backend on port 8000 to accept requests from the frontend on port 5173.
+# This CORS Middleware is correct for local development
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -25,13 +27,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# --- END OF FIX ---
 
-# --- Use the simple routing structure that worked before ---
+# --- THE LAST GOOD, WORKING ROUTING CONFIGURATION ---
+
+# Includes routers at the root, creating paths like /lists, /items
 app.include_router(config.router)
 app.include_router(todos.router)
 app.include_router(items.router)
+
+# Includes the AI router at /ai, creating paths like /ai/sessions, /ai/ws
 app.include_router(ai_api_router, prefix="/ai")
+
+# --- THE SURGICAL ADDITION FOR LIVEKIT ---
+# This adds the LiveKit token endpoint at /api/livekit/token,
+# matching the hardcoded URL in the ConferenceRoom component.
 app.include_router(livekit.router, prefix="/api")
 
 @app.get("/")

@@ -1,11 +1,83 @@
-import { memo } from 'react';
+// features/chatbot/ChatPage.tsx
+
+import { memo, useState, useEffect } from 'react';
+import { LiveKitRoom } from '@livekit/components-react'; // <-- Import LiveKitRoom
+
 import { Button } from '@/components/ui/button';
 import { ChatInput } from './components/ChatInput';
 import { ChatWindow } from './components/ChatWindow';
 import { ConferenceRoom } from './components/ConferenceRoom';
 import { useChat } from './hooks/useChat';
+import { LIVEKIT_CONFIG } from '@/config'; // <-- Import LiveKit config
 
+// This must be the same room name used by the backend bot.
+const AI_CHAT_ROOM_NAME = "ai-chat-room";
+// In a real app, this would come from an authentication context.
+const USER_IDENTITY = `user-${Math.round(Math.random() * 1000)}`;
+
+/**
+ * A wrapper component that handles the LiveKit connection and token fetching.
+ * It will render the actual ChatUI only after a token is successfully acquired.
+ */
 export const ChatPage = memo(function ChatPage() {
+  const [token, setToken] = useState<string | null>(null);
+
+  // Fetch the LiveKit token when the component mounts.
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const response = await fetch(LIVEKIT_CONFIG.TOKEN_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room_name: AI_CHAT_ROOM_NAME,
+            identity: USER_IDENTITY,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch LiveKit token');
+        }
+        const data = await response.json();
+        setToken(data.token);
+      } catch (error) {
+        console.error("Error fetching LiveKit token:", error);
+        // Handle token fetch error appropriately in a real app
+      }
+    };
+    fetchToken();
+  }, []); // Empty dependency array means this runs only once on mount.
+
+  // If we don't have a token yet, show a loading state.
+  if (!token) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p>Initializing secure connection...</p>
+      </div>
+    );
+  }
+
+  // Once we have a token, we render the LiveKitRoom provider,
+  // which establishes the connection. Our ChatUI is inside.
+  return (
+    <LiveKitRoom
+      serverUrl={LIVEKIT_CONFIG.SERVER_URL}
+      token={token}
+      connect={true}
+      // We do not need to connect to audio/video for the data channel.
+      audio={false}
+      video={false}
+    >
+      <ChatUI />
+    </LiveKitRoom>
+  );
+});
+
+/**
+ * This is your original UI component, now separated.
+ * It can be confident that by the time it renders, the LiveKit connection
+ * is being established by the parent <LiveKitRoom> provider.
+ */
+const ChatUI = memo(function ChatUI() {
   const { 
     messages, 
     input, 
@@ -19,14 +91,11 @@ export const ChatPage = memo(function ChatPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* The ChatWindow grows to fill available space and is scrollable. */}
       <div className="flex-1 overflow-y-auto">
         <ChatWindow messages={messages} isLoading={isLoading} />
       </div>
 
-      {/* The footer area is a fixed height and never shrinks. */}
       <div className="shrink-0 border-t border-neutral-800">
-        {/* Connection Status Indicator */}
         {status !== 'connected' && (
           <div className={`p-3 text-center text-sm ${
             status === 'error' 
@@ -39,9 +108,7 @@ export const ChatPage = memo(function ChatPage() {
               {status === 'disconnected' && 'Disconnected from assistant'}
             </div>
             {connectionError && (
-              <div className="mt-1 text-xs opacity-90">
-                {connectionError}
-              </div>
+              <div className="mt-1 text-xs opacity-90">{connectionError}</div>
             )}
             {status === 'error' && (
               <Button 
@@ -53,15 +120,10 @@ export const ChatPage = memo(function ChatPage() {
                 Try Again
               </Button>
             )}
-            {status === 'connecting' && (
-              <div className="mt-2 text-xs opacity-75">
-                This may take a few moments on mobile networks
-              </div>
-            )}
           </div>
         )}
         <ChatInput
-          key={`chat-input-${status}-${isLoading}`} // Force re-render when status changes
+          key={`chat-input-${status}-${isLoading}`}
           input={input}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
@@ -88,6 +150,7 @@ export const ChatPage = memo(function ChatPage() {
 //     input, 
 //     status, 
 //     isLoading, 
+//     connectionError,
 //     handleInputChange, 
 //     handleSubmit, 
 //     reconnect 
@@ -104,25 +167,40 @@ export const ChatPage = memo(function ChatPage() {
 //       <div className="shrink-0 border-t border-neutral-800">
 //         {/* Connection Status Indicator */}
 //         {status !== 'connected' && (
-//           <div className={`p-2 text-center text-xs ${
+//           <div className={`p-3 text-center text-sm ${
 //             status === 'error' 
 //               ? 'bg-red-900/50 text-red-300' 
 //               : 'bg-yellow-900/50 text-yellow-300'
 //           }`}>
-//             {status === 'connecting' ? 'Connecting to assistant...' : 'Connection failed.'}
+//             <div className="font-medium">
+//               {status === 'connecting' && 'Connecting to assistant...'}
+//               {status === 'error' && 'Connection Failed'}
+//               {status === 'disconnected' && 'Disconnected from assistant'}
+//             </div>
+//             {connectionError && (
+//               <div className="mt-1 text-xs opacity-90">
+//                 {connectionError}
+//               </div>
+//             )}
 //             {status === 'error' && (
 //               <Button 
 //                 onClick={reconnect} 
-//                 variant="link" 
+//                 variant="outline" 
 //                 size="sm" 
-//                 className="ml-2 h-auto p-0 text-white underline"
+//                 className="mt-2 h-8 border-red-400 text-red-300 hover:bg-red-900/30 hover:text-red-200"
 //               >
-//                 Retry
+//                 Try Again
 //               </Button>
+//             )}
+//             {status === 'connecting' && (
+//               <div className="mt-2 text-xs opacity-75">
+//                 This may take a few moments on mobile networks
+//               </div>
 //             )}
 //           </div>
 //         )}
 //         <ChatInput
+//           key={`chat-input-${status}-${isLoading}`} // Force re-render when status changes
 //           input={input}
 //           handleInputChange={handleInputChange}
 //           handleSubmit={handleSubmit}
@@ -136,18 +214,25 @@ export const ChatPage = memo(function ChatPage() {
 //     </div>
 //   );
 // });
+// // import { memo } from 'react';
 // // import { Button } from '@/components/ui/button';
 // // import { ChatInput } from './components/ChatInput';
 // // import { ChatWindow } from './components/ChatWindow';
 // // import { ConferenceRoom } from './components/ConferenceRoom';
 // // import { useChat } from './hooks/useChat';
 
-// // export function ChatPage() {
-// //   const { messages, input, status, isLoading, handleInputChange, handleSubmit, reconnect } = useChat();
+// // export const ChatPage = memo(function ChatPage() {
+// //   const { 
+// //     messages, 
+// //     input, 
+// //     status, 
+// //     isLoading, 
+// //     handleInputChange, 
+// //     handleSubmit, 
+// //     reconnect 
+// //   } = useChat();
 
 // //   return (
-// //     // This structure is CRITICAL for the mobile keyboard to work.
-// //     // <div className="flex h-full flex-col bg-neutral-900">
 // //     <div className="flex h-full flex-col">
 // //       {/* The ChatWindow grows to fill available space and is scrollable. */}
 // //       <div className="flex-1 overflow-y-auto">
@@ -158,10 +243,21 @@ export const ChatPage = memo(function ChatPage() {
 // //       <div className="shrink-0 border-t border-neutral-800">
 // //         {/* Connection Status Indicator */}
 // //         {status !== 'connected' && (
-// //           <div className={`p-2 text-center text-xs ${status === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-yellow-900/50 text-yellow-300'}`}>
+// //           <div className={`p-2 text-center text-xs ${
+// //             status === 'error' 
+// //               ? 'bg-red-900/50 text-red-300' 
+// //               : 'bg-yellow-900/50 text-yellow-300'
+// //           }`}>
 // //             {status === 'connecting' ? 'Connecting to assistant...' : 'Connection failed.'}
 // //             {status === 'error' && (
-// //               <Button onClick={reconnect} variant="link" size="sm" className="ml-2 h-auto p-0 text-white underline">Retry</Button>
+// //               <Button 
+// //                 onClick={reconnect} 
+// //                 variant="link" 
+// //                 size="sm" 
+// //                 className="ml-2 h-auto p-0 text-white underline"
+// //               >
+// //                 Retry
+// //               </Button>
 // //             )}
 // //           </div>
 // //         )}
@@ -178,7 +274,7 @@ export const ChatPage = memo(function ChatPage() {
 // //       </div>
 // //     </div>
 // //   );
-// // }
+// // });
 // // // import { Button } from '@/components/ui/button';
 // // // import { ChatInput } from './components/ChatInput';
 // // // import { ChatWindow } from './components/ChatWindow';
@@ -189,15 +285,15 @@ export const ChatPage = memo(function ChatPage() {
 // // //   const { messages, input, status, isLoading, handleInputChange, handleSubmit, reconnect } = useChat();
 
 // // //   return (
-// // //     // This component MUST be a flex container that fills the height provided by its parent (App.tsx)
+// // //     // This structure is CRITICAL for the mobile keyboard to work.
+// // //     // <div className="flex h-full flex-col bg-neutral-900">
 // // //     <div className="flex h-full flex-col">
-// // //       {/* The ChatWindow takes up all available space and becomes scrollable */}
+// // //       {/* The ChatWindow grows to fill available space and is scrollable. */}
 // // //       <div className="flex-1 overflow-y-auto">
 // // //         <ChatWindow messages={messages} isLoading={isLoading} />
 // // //       </div>
 
-      
-// // //       {/* This container will not grow or shrink, staying at the bottom */}
+// // //       {/* The footer area is a fixed height and never shrinks. */}
 // // //       <div className="shrink-0 border-t border-neutral-800">
 // // //         {/* Connection Status Indicator */}
 // // //         {status !== 'connected' && (
@@ -208,7 +304,7 @@ export const ChatPage = memo(function ChatPage() {
 // // //             )}
 // // //           </div>
 // // //         )}
-// // //          <ChatInput
+// // //         <ChatInput
 // // //           input={input}
 // // //           handleInputChange={handleInputChange}
 // // //           handleSubmit={handleSubmit}
@@ -222,89 +318,132 @@ export const ChatPage = memo(function ChatPage() {
 // // //     </div>
 // // //   );
 // // // }
-// // // import { ChatInput } from './components/ChatInput';
-// // // import { ChatWindow } from './components/ChatWindow';
-// // // import { ConferenceRoom } from './components/ConferenceRoom';
-// // // // import { VoiceEchoTest } from './components/VoiceEchoTest';
-
-// // // import { useChat } from './hooks/useChat';
-
-// // // export function ChatPage() {
-// // //   const { 
-// // //     messages, 
-// // //     input, 
-// // //     status,
-// // //     isLoading, 
-// // //     handleInputChange, 
-// // //     handleSubmit,
-// // //     reconnect 
-// // //   } = useChat();
-
-// // //   return (
-// // //     <div className="flex h-full flex-col">
-// // //       <ChatWindow messages={messages} isLoading={isLoading} />
-      
-// // //       {/* Connection status indicator */}
-// // //       {status === 'error' && (
-// // //         <div className="p-4 text-center bg-red-50 border-t border-red-200">
-// // //           <p className="text-sm text-red-600 mb-2">
-// // //             Connection failed. Unable to connect to the chat server.
-// // //           </p>
-// // //           <button 
-// // //             onClick={reconnect}
-// // //             className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-// // //           >
-// // //             Retry Connection
-// // //           </button>
-// // //         </div>
-// // //       )}
-      
-// // //       {status === 'connecting' && (
-// // //         <div className="p-4 text-center bg-yellow-50 border-t border-yellow-200">
-// // //           <p className="text-sm text-yellow-600">
-// // //             Connecting to chat server...
-// // //           </p>
-// // //         </div>
-// // //       )}
-      
-// // //       <div className="border-t">
-// // //         <ChatInput
-// // //           input={input}
-// // //           handleInputChange={handleInputChange}
-// // //           handleSubmit={handleSubmit}
-// // //           isLoading={isLoading}
-// // //           disabled={status !== 'connected'}
-// // //         />
-// // //       </div>
-// // //       <div className="p-4 border-t bg-background">
-// // //     <ConferenceRoom />
-// // //       </div>
-
-// // //        {/* <div className="p-4 border-t bg-background">
-// // //             <VoiceEchoTest />
-// // //         </div> */}
-// // //     </div>
-// // //   );
-// // // }
+// // // // import { Button } from '@/components/ui/button';
 // // // // import { ChatInput } from './components/ChatInput';
 // // // // import { ChatWindow } from './components/ChatWindow';
+// // // // import { ConferenceRoom } from './components/ConferenceRoom';
 // // // // import { useChat } from './hooks/useChat';
 
 // // // // export function ChatPage() {
-// // // //   const { messages, input, isLoading, handleInputChange, handleSubmit, error } = useChat();
+// // // //   const { messages, input, status, isLoading, handleInputChange, handleSubmit, reconnect } = useChat();
+
+// // // //   return (
+// // // //     // This component MUST be a flex container that fills the height provided by its parent (App.tsx)
+// // // //     <div className="flex h-full flex-col">
+// // // //       {/* The ChatWindow takes up all available space and becomes scrollable */}
+// // // //       <div className="flex-1 overflow-y-auto">
+// // // //         <ChatWindow messages={messages} isLoading={isLoading} />
+// // // //       </div>
+
+      
+// // // //       {/* This container will not grow or shrink, staying at the bottom */}
+// // // //       <div className="shrink-0 border-t border-neutral-800">
+// // // //         {/* Connection Status Indicator */}
+// // // //         {status !== 'connected' && (
+// // // //           <div className={`p-2 text-center text-xs ${status === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-yellow-900/50 text-yellow-300'}`}>
+// // // //             {status === 'connecting' ? 'Connecting to assistant...' : 'Connection failed.'}
+// // // //             {status === 'error' && (
+// // // //               <Button onClick={reconnect} variant="link" size="sm" className="ml-2 h-auto p-0 text-white underline">Retry</Button>
+// // // //             )}
+// // // //           </div>
+// // // //         )}
+// // // //          <ChatInput
+// // // //           input={input}
+// // // //           handleInputChange={handleInputChange}
+// // // //           handleSubmit={handleSubmit}
+// // // //           isLoading={isLoading}
+// // // //           disabled={status !== 'connected'}
+// // // //         />
+// // // //         <div className="p-4 border-t border-neutral-800">
+// // // //           <ConferenceRoom />
+// // // //         </div>
+// // // //       </div>
+// // // //     </div>
+// // // //   );
+// // // // }
+// // // // import { ChatInput } from './components/ChatInput';
+// // // // import { ChatWindow } from './components/ChatWindow';
+// // // // import { ConferenceRoom } from './components/ConferenceRoom';
+// // // // // import { VoiceEchoTest } from './components/VoiceEchoTest';
+
+// // // // import { useChat } from './hooks/useChat';
+
+// // // // export function ChatPage() {
+// // // //   const { 
+// // // //     messages, 
+// // // //     input, 
+// // // //     status,
+// // // //     isLoading, 
+// // // //     handleInputChange, 
+// // // //     handleSubmit,
+// // // //     reconnect 
+// // // //   } = useChat();
 
 // // // //   return (
 // // // //     <div className="flex h-full flex-col">
 // // // //       <ChatWindow messages={messages} isLoading={isLoading} />
-// // // //       {error && <p className="p-4 text-center text-sm text-red-500">{error}</p>}
+      
+// // // //       {/* Connection status indicator */}
+// // // //       {status === 'error' && (
+// // // //         <div className="p-4 text-center bg-red-50 border-t border-red-200">
+// // // //           <p className="text-sm text-red-600 mb-2">
+// // // //             Connection failed. Unable to connect to the chat server.
+// // // //           </p>
+// // // //           <button 
+// // // //             onClick={reconnect}
+// // // //             className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+// // // //           >
+// // // //             Retry Connection
+// // // //           </button>
+// // // //         </div>
+// // // //       )}
+      
+// // // //       {status === 'connecting' && (
+// // // //         <div className="p-4 text-center bg-yellow-50 border-t border-yellow-200">
+// // // //           <p className="text-sm text-yellow-600">
+// // // //             Connecting to chat server...
+// // // //           </p>
+// // // //         </div>
+// // // //       )}
+      
 // // // //       <div className="border-t">
 // // // //         <ChatInput
 // // // //           input={input}
 // // // //           handleInputChange={handleInputChange}
 // // // //           handleSubmit={handleSubmit}
 // // // //           isLoading={isLoading}
+// // // //           disabled={status !== 'connected'}
 // // // //         />
 // // // //       </div>
+// // // //       <div className="p-4 border-t bg-background">
+// // // //     <ConferenceRoom />
+// // // //       </div>
+
+// // // //        {/* <div className="p-4 border-t bg-background">
+// // // //             <VoiceEchoTest />
+// // // //         </div> */}
 // // // //     </div>
 // // // //   );
 // // // // }
+// // // // // import { ChatInput } from './components/ChatInput';
+// // // // // import { ChatWindow } from './components/ChatWindow';
+// // // // // import { useChat } from './hooks/useChat';
+
+// // // // // export function ChatPage() {
+// // // // //   const { messages, input, isLoading, handleInputChange, handleSubmit, error } = useChat();
+
+// // // // //   return (
+// // // // //     <div className="flex h-full flex-col">
+// // // // //       <ChatWindow messages={messages} isLoading={isLoading} />
+// // // // //       {error && <p className="p-4 text-center text-sm text-red-500">{error}</p>}
+// // // // //       <div className="border-t">
+// // // // //         <ChatInput
+// // // // //           input={input}
+// // // // //           handleInputChange={handleInputChange}
+// // // // //           handleSubmit={handleSubmit}
+// // // // //           isLoading={isLoading}
+// // // // //         />
+// // // // //       </div>
+// // // // //     </div>
+// // // // //   );
+// // // // // }
