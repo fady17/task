@@ -2,9 +2,11 @@
 todo_env
 __pycache__
 
-prompts
+
 localhost+3-key.pem
 
 localhost+3.pem
 
 certs
+livekit.yaml
+stop-demo.sh
