@@ -219,6 +219,191 @@ TOOLS = [
     # because the core workflow relies on get_all_todo_lists() for context.
     # Adding it is possible but redundant for the current AI logic.
 ]
+
+
+
+
+# # ai/config.py
+# """
+# Centralized configuration for the AI sub-application.
+# Contains API URLs, model names, system prompts, tool definitions, and other static settings.
+# """
+
+# import logging
+# import os
+# from pathlib import Path
+# from aiortc import RTCConfiguration, RTCIceServer
+
+# # --- LOGGING SETUP ---
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# logger = logging.getLogger(__name__)
+
+# # --- API & MODEL CONFIGURATION ---
+# # LM_STUDIO_API_URL = "http://localhost:1234/v1"
+# LM_STUDIO_HOST = os.getenv("LM_STUDIO_HOST", "localhost")
+# LM_STUDIO_API_URL = f"http://{LM_STUDIO_HOST}:1234/v1"
+
+# # CRUD_API_URL = "http://localhost:8000"
+# CRUD_API_HOST = os.getenv("API_HOST", "localhost")
+# CRUD_API_URL = f"http://{CRUD_API_HOST}:8000"
+
+# MODEL_NAME = "qwen2.5-7b-instruct"
+
+# TURN_SERVER_HOST = os.getenv("DOCKER_HOST_IP", "127.0.0.1")
+# # PC_CONFIG = RTCConfiguration(iceServers=[
+# #     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
+# #     RTCIceServer(urls=["stun:stun.l.google.com:19302"])
+# # ])
+# PC_CONFIG = RTCConfiguration(
+#     iceServers=[
+#         RTCIceServer(
+#             urls=[
+#                 f"stun:{TURN_SERVER_HOST}:3478",
+#                 f"turn:{TURN_SERVER_HOST}:3478"
+#             ],
+#             username="demo",
+#             credential="password"
+#         )
+#     ]
+# )
+
+
+# # PC_CONFIG = RTCConfiguration(iceServers=[
+# #     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
+  
+# # ])
+
+# # --- WEBRTC CONFIGURATION ---
+# # PC_CONFIG = RTCConfiguration(iceServers=[
+# #     RTCIceServer(urls=[f"turn:{TURN_SERVER_HOST}:3478"], username="demo", credential="password"),
+# #     RTCIceServer(urls=["stun:stun.l.google.com:19302"])
+# # ])
+# # ice_servers = [
+# #     RTCIceServer(
+# #         urls=[
+# #             f"stun:{TURN_SERVER_HOST}:3478",
+# #             f"turn:{TURN_SERVER_HOST}:3478"
+# #         ],
+# #         username="demo",
+# #         credential="password"
+# #     )
+# # ]
+
+# # PC_CONFIG = RTCConfiguration(iceServers=ice_servers)
+
+
+# # --- SYSTEM PROMPT LOADING ---
+# def load_system_prompt():
+#     """Load system prompt from external file."""
+#     # Get the directory where this config.py file is located
+#     current_dir = Path(__file__).parent
+#     prompt_file = current_dir / "system_prompt.txt"
+    
+#     with open(prompt_file, 'r', encoding='utf-8') as f:
+#         return f.read().strip()
+
+# # Load the system prompt
+# SYSTEM_PROMPT = load_system_prompt()
+
+# TOOLS = [
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "get_all_todo_lists",
+#             "description": "Get all todo lists with their items - use this first when you need to find existing lists or items",
+#             "parameters": {"type": "object", "properties": {}}
+#         }
+#     },
+#     {
+#         "type": "function", 
+#         "function": {
+#             "name": "create_todo_list",
+#             "description": "Create a new todo list",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {"title": {"type": "string", "description": "Title for the new list"}},
+#                 "required": ["title"]
+#             }
+#         }
+#     },
+#     # <<<--- ADDED THE MISSING TOOL HERE ---<<<
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "update_todo_list",
+#             "description": "Update a todo list's title",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {
+#                     "list_id": {"type": "integer", "description": "The ID of the todo list to update"},
+#                     "title": {"type": "string", "description": "The new title for the todo list"}
+#                 },
+#                 "required": ["list_id", "title"]
+#             }
+#         }
+#     },
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "delete_todo_list",
+#             "description": "Delete an entire todo list",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {"list_id": {"type": "integer", "description": "ID of list to delete"}},
+#                 "required": ["list_id"]
+#             }
+#         }
+#     },
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "create_todo_item", 
+#             "description": "Add a new item to a specific list",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {
+#                     "list_id": {"type": "integer", "description": "ID of the list to add item to"},
+#                     "title": {"type": "string", "description": "Title of the new item"},
+#                     "completed": {"type": "boolean", "description": "Whether item starts as completed", "default": False}
+#                 },
+#                 "required": ["list_id", "title"]
+#             }
+#         }
+#     },
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "update_todo_item",
+#             "description": "Update an item's title or completion status",
+#             "parameters": {
+#                 "type": "object", 
+#                 "properties": {
+#                     "list_id": {"type": "integer"},
+#                     "item_id": {"type": "integer"},
+#                     "title": {"type": "string", "description": "New title (optional)"},
+#                     "completed": {"type": "boolean", "description": "Completion status (optional)"}
+#                 },
+#                 "required": ["list_id", "item_id"]
+#             }
+#         }
+#     },
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "delete_todo_item", 
+#             "description": "Delete a specific todo item",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {
+#                     "list_id": {"type": "integer", "description": "ID of the list containing the item"},
+#                     "item_id": {"type": "integer", "description": "ID of the item to delete"}
+#                 },
+#                 "required": ["list_id", "item_id"]
+#             }
+#         }
+#     },
+    
+# ]
 # # ai/config.py
 # """
 # Centralized configuration for the AI sub-application.

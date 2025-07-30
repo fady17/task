@@ -14,7 +14,14 @@ services:
     # Expose the port to your host machine (localhost)
     ports:
       - "5432:5432"
+    networks:
+      - todo_infra_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # turn:
   #   image: coturn/coturn
@@ -28,3 +35,6 @@ services:
 
 volumes:
   postgres_dev_data:
+networks:
+  todo_infra_network:
+    driver: bridge

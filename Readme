@@ -1,16 +1,8 @@
 #  DONT USE THE DOCKERS
-
-
 # AI Agent with MCP Integration
 
-
 ## How to Run the Stack
-
-*(This section would be the same as the previous README, detailing `docker-compose up --build`)*
-
-## Running the Project
-
-This project is fully containerized with Docker, making it easy to run.
+the scripts is not recommended
 
 #### Prerequisites
 *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
@@ -29,11 +21,13 @@ This project is fully containerized with Docker, making it easy to run.
 
       # Docker Host IP for container-to-host communication
       DOCKER_HOST_IP=host.docker.internal
+      LIVEKIT_API_KEY=devkey
+      LIVEKIT_API_SECRET=secret
       ```
 
 2.  **Start the Application Stack:**
     *   Navigate to the `todo-list` directory in your terminal.
-    *   Run the single command:
+  
       ```bash
       livekit-server --dev
       # From the todo-list directory
