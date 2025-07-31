@@ -3,76 +3,94 @@
 
 ## How to Run the Stack
 the scripts is not recommended
+# AI Agent with MCP Integration
 
-#### Prerequisites
-*   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
-*   [LM Studio](https://lmstudio.ai/) installed, with a model downloaded, and the AI server started.
+> ⚠️ **Note**: Docker setup and scripts is available but not recommended. Follow manual setup below.
 
-#### Step-by-Step Instructions
+## Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (installed and running)
+- [LM Studio](https://lmstudio.ai/) (with model downloaded and server started)
+- Node.js and npm
+- Python 3.10
 
-1.  **Configure Environment:**
-    *   In the `todo-list` directory, create a file named `.env`.
-    *   Copy the contents of the `.env.example` file (if provided) or add the following:
-      ```
-      # PostgreSQL Settings
-      POSTGRES_USER=appuser
-      POSTGRES_PASSWORD=a-strong-password
-      POSTGRES_DB=todo_db
+## Quick Start
 
-      # Docker Host IP for container-to-host communication
-      DOCKER_HOST_IP=host.docker.internal
-      LIVEKIT_API_KEY=devkey
-      LIVEKIT_API_SECRET=secret
-      ```
+### 1. Environment Setup
+Create `.env` in the `todo-list` directory:
+```env
+# PostgreSQL Settings
+POSTGRES_USER=appuser
+POSTGRES_PASSWORD=a-strong-password
+POSTGRES_DB=todo_db
 
-2.  **Start the Application Stack:**
-    *   Navigate to the `todo-list` directory in your terminal.
-  
-      ```bash
-      livekit-server --dev
-      # From the todo-list directory
-    docker compose -f compose.infra.yml up --build
-        #in a new terminal
-    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-        #in a new terminal
-    cd frontend
-    npm i
-    npm run dev
+# Docker Host IP
+DOCKER_HOST_IP=host.docker.internal
+LIVEKIT_API_KEY=devkey
+LIVEKIT_API_SECRET=secret
+```
 
+### 2. Start Services
+Run these commands in separate terminals:
 
-      ```
-    *   This will build the images and start all the services (database, and TURN server).
+```bash
+# Terminal 1: LiveKit server
+livekit-server --dev
 
-3.  **Access the Application:**
-    *   Open your web browser and go to: `http://localhost:5173`
+# Terminal 2: Infrastructure (database)
+docker compose -f compose.infra.yml up --build
 
-## Technology Stack
-
-*   **Backend:** Python / FastAPI
-*   **Frontend:** React / TypeScript / Vite
-*   **Database:** PostgreSQL
-*   **Real-Time Communication:** WebRTC with a CoTURN server (live kit now)
-*   **AI Model Hosting:** LM Studio
-*   **Containerization:** Docker / Docker Compose
-
-# Commands i use
-alembic revision --autogenerate -m "Create initial todo_lists and todo_items tables"
-alembic upgrade head
-
-turnserver -c turnserver.conf 
-
+# Terminal 3: Backend API
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
+# Terminal 4: Frontend
+cd frontend
+npm install
+npm run dev
+```
 
+### 3. Access Application
+Open browser: `http://localhost:5173`
+
+## Technology Stack
+- **Backend**: Python/FastAPI
+- **Frontend**: React/TypeScript/Vite  
+- **Database**: PostgreSQL
+- **Real-Time**: WebRTC with LiveKit
+- **AI**: LM Studio
+- **Containers**: Docker/Docker Compose
+
+## Development Commands
+
+<details>
+<summary>Database migrations</summary>
+
+```bash
+alembic revision --autogenerate -m "Create initial todo_lists and todo_items tables"
+alembic upgrade head
+```
+</details>
+
+<details>
+<summary>Docker operations</summary>
+
+```bash
+# Start with dev overrides
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
-
-stop and remove all containers:
+# Stop and remove
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+```
+</details>
 
+<details>
+<summary>SSL certificates</summary>
+
+```bash
 mkcert localhost 127.0.0.1 ::1 192.168.1.3
+```
+</details>
 
+---
 
- docker-compose -f compose.yml -f compose.dev.yml up --build
-<!-- sudo brew services start dnsmasq -->
-sudo nginx
+### Legacy Version
+Previous voice API implementation: [echo-voiceapi](https://github.com/fady17/echo-voiceapi/tree/dev)

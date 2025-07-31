@@ -66,28 +66,29 @@ services:
     restart: unless-stopped
     
 
-  # The CoTURN Server
-  turn:
-      image: coturn/coturn
-      container_name: todo_turn
-      volumes:
-        - ./turnserver.conf:/etc/coturn/turnserver.conf
-      command: ["-c", "/etc/coturn/turnserver.conf"]
-      # network_mode: host
-      networks:
-        - todo_network 
-      ports:
-        - "3478:3478/tcp"
-        - "3478:3478/udp"
-      restart: unless-stopped
-      healthcheck:
+  # The CoTURN Server (legacy)
+  # turn:
+  #     image: coturn/coturn
+  #     container_name: todo_turn
+  #     volumes:
+  #       - ./turnserver.conf:/etc/coturn/turnserver.conf
+  #     command: ["-c", "/etc/coturn/turnserver.conf"]
+  #     # network_mode: host
+  #     networks:
+  #       - todo_network 
+  #     ports:
+  #       - "3478:3478/tcp"
+  #       - "3478:3478/udp"
+  #     restart: unless-stopped
+  #     healthcheck:
    
-        test: ["CMD-SHELL", "cat /proc/net/tcp | awk '$$2 ~ /:0D96$$/' | grep -q ."]
-        interval: 10s
-        timeout: 5s
-        retries: 5
-        start_period: 10s 
+  #       test: ["CMD-SHELL", "cat /proc/net/tcp | awk '$$2 ~ /:0D96$$/' | grep -q ."]
+  #       interval: 10s
+  #       timeout: 5s
+  #       retries: 5
+  #       start_period: 10s 
   
+  # Required by livekit
   # redis:
   #   image: redis:7-alpine
   #   container_name: todo_redis
@@ -95,13 +96,13 @@ services:
   #     - todo_network
   #   restart: unless-stopped
 
-  # --- NEW: Add the LiveKit Media Server ---
+  # ---  the LiveKit Media Server ---
   # livekit:
   #   image: livekit/livekit-server:v1.9 # Use a specific, stable version
   #   container_name: todo_livekit
   #   command: --config /etc/livekit.yaml
   #   volumes:
-  #     # We will create this config file in the next step
+
   #     - ./livekit.yaml:/etc/livekit.yaml
   #   networks:
   #     - todo_network

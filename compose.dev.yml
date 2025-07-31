@@ -1,4 +1,4 @@
-# services:
+# services:  this service have been removed it lives at version1 https://github.com/fady17/echo-voiceapi.git
 #   voice-api:
 #     build:
 #       context: ../voice-service
