@@ -20,7 +20,7 @@ async def get_app_config(request: Request):
     return {
         "api_host": server_host,
         "api_port": os.getenv("API_PORT", 8000),
-        "voice_api_port": os.getenv("VOICE_API_PORT", 8001),
+        # "voice_api_port": os.getenv("VOICE_API_PORT", 8001),
         "turn_server": {
             "urls": [
                 f"stun:{server_host}:3478",

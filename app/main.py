@@ -1,4 +1,4 @@
-# app/main.py - RESTORED to the last good working state and AUGMENTED for LiveKit
+# app/main.py - 
 
 from dotenv import load_dotenv
 load_dotenv()

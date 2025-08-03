@@ -38,3 +38,4 @@ httpx
 # --- Model Context Protocol (MCP) ---
 # The library for running the MCP server to expose tools to LM Studio.
 mcp
+pipecat-ai[azure,livekit,silero,cartesia]

@@ -1,9 +1,12 @@
-# ai/main.py - RESTORED TO WORKING STATE
+
+# ai/main.py
 import asyncio
 from fastapi import APIRouter
+
+from ai.routers import voice, sessions
 from . import db_utils 
-from .config import logger
-from .routers import sessions
+from ai.config import logger
+
 from .dependencies import get_todo_api_client
 from .services.livekit_bot import livekit_bot, AI_CHAT_ROOM_NAME
 
@@ -11,6 +14,7 @@ from .services.livekit_bot import livekit_bot, AI_CHAT_ROOM_NAME
 api_router = APIRouter()
 
 api_router.include_router(sessions.router)
+# api_router.include_router(voice.router)
 # api_router.include_router(websocket.router)
 
 async def startup_event():
